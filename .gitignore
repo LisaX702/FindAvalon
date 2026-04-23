@@ -1,0 +1,10 @@
+node_modules
+.next
+dist
+.turbo
+.env
+.env.local
+coverage
+*.tsbuildinfo
+packages/database/generated
+postgresql-16.13-1-windows-x64.exe

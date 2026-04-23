@@ -1,0 +1,38 @@
+services:
+  - name: relocateit-web
+    type: web
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm run deploy:build:web
+    startCommand: npm run deploy:start:web
+    envVars:
+      - key: NODE_VERSION
+        value: 24
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+
+  - name: relocateit-api
+    type: web
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm run deploy:build:api
+    startCommand: npm run deploy:start:api
+    preDeployCommand: npm run deploy:migrate
+    envVars:
+      - key: NODE_VERSION
+        value: 24
+      - key: DATABASE_URL
+        fromDatabase:
+          name: relocateit-db
+          property: connectionString
+      - key: APP_URL
+        sync: false
+
+databases:
+  - name: relocateit-db
+    plan: basic-256mb
+    region: oregon
+    databaseName: relocateit
+    postgresMajorVersion: "16"

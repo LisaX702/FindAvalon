@@ -1,0 +1,35 @@
+{
+  "name": "relocateit",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-web-dev.ps1",
+    "dev:web:raw": "npm run dev -w @relocateit/web",
+    "dev:api": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-api-dev.ps1",
+    "build": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/build-with-env.ps1",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "prisma:generate": "npm run prisma:generate -w @relocateit/database",
+    "db:migrate": "npm run prisma:migrate:deploy -w @relocateit/database",
+    "db:seed": "npm run prisma:seed -w @relocateit/database",
+    "reset:web-cache": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/reset-web-cache.ps1",
+    "reset:web-port": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/reset-web-port.ps1",
+    "reset:api-port": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/reset-api-port.ps1",
+    "qa:core": "node --env-file=.env ./scripts/qa-authenticated-flow.mjs",
+    "qa:hosted": "node ./scripts/qa-hosted-smoke.mjs",
+    "validate:env": "node --env-file=.env ./scripts/validate-env.mjs",
+    "readiness:check": "node --env-file=.env ./scripts/readiness-check.mjs",
+    "deploy:build:web": "npm run build -w @relocateit/web",
+    "deploy:start:web": "npm run start -w @relocateit/web",
+    "deploy:build:api": "npm run prisma:generate && npm run build -w @relocateit/api",
+    "deploy:start:api": "npm run start -w @relocateit/api",
+    "deploy:migrate": "npm run db:migrate"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}

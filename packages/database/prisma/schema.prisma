@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String              @id
+  email              String              @unique
+  passwordHash       String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  preferenceProfiles PreferenceProfile[]
+  savedLocations     SavedLocation[]
+  comparisons        Comparison[]
+  sessions           Session[]
+}
+
+model Session {
+  id               String   @id @default(cuid())
+  userId           String
+  sessionTokenHash String   @unique
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PreferenceProfile {
+  id            String   @id @default(cuid())
+  userId        String
+  label         String
+  isCurrent     Boolean  @default(false)
+  weightsJson   Json
+  constraintsJson Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isCurrent])
+  @@index([userId, updatedAt])
+}
+
+model Location {
+  id             String            @id @default(cuid())
+  slug           String            @unique
+  name           String
+  state          String
+  country        String
+  population     Int
+  description    String?
+  latitude       Decimal?          @db.Decimal(8, 5)
+  longitude      Decimal?          @db.Decimal(8, 5)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  metrics        LocationMetrics?
+  savedLocations SavedLocation[]
+  comparisonRows ComparisonRow[]
+}
+
+model LocationMetrics {
+  id                   String   @id @default(cuid())
+  locationId           String   @unique
+  housingCostIndex     Float
+  taxBurdenIndex       Float
+  climateScore         Float
+  safetyScore          Float
+  educationScore       Float
+  healthcareScore      Float
+  jobMarketScore       Float
+  walkabilityScore     Float
+  transitScore         Float
+  recreationScore      Float
+  internetQualityScore Float
+  disasterRiskIndex    Float
+  sourceSummary        String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  location             Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+}
+
+model SavedLocation {
+  id         String   @id @default(cuid())
+  userId     String
+  locationId String
+  note       String?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, locationId])
+  @@index([userId])
+  @@index([locationId])
+}
+
+model Comparison {
+  id        String          @id @default(cuid())
+  userId    String
+  createdAt DateTime        @default(now())
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rows      ComparisonRow[]
+
+  @@index([userId])
+}
+
+model ComparisonRow {
+  id           String     @id @default(cuid())
+  comparisonId String
+  locationId   String
+  position     Int
+  comparison   Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  location     Location   @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([comparisonId, locationId])
+  @@index([comparisonId, position])
+}

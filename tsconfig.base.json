@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@relocateit/types": ["packages/types/src"],
+      "@relocateit/constants": ["packages/constants/src"],
+      "@relocateit/scoring": ["packages/scoring/src"],
+      "@relocateit/database": ["packages/database/src"]
+    }
+  }
+}

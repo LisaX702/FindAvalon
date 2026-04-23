@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate-and-smoke:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: relocateit
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d relocateit"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/relocateit?schema=public
+      NEXT_PUBLIC_API_URL: http://127.0.0.1:3001
+      APP_URL: http://127.0.0.1:3000
+      API_URL: http://127.0.0.1:3001
+      WEB_URL: http://127.0.0.1:3000
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Write CI .env
+        run: |
+          cat <<'EOF' > .env
+          DATABASE_URL=${DATABASE_URL}
+          NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+          APP_URL=${APP_URL}
+          PORT=3001
+          API_URL=${API_URL}
+          WEB_URL=${WEB_URL}
+          EOF
+
+      - name: Validate env
+        run: npm run validate:env
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Apply migrations
+        run: npm run db:migrate
+
+      - name: Seed database
+        run: npm run db:seed
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build API
+        run: npm run build -w @relocateit/api
+
+      - name: Build web
+        run: npm run build -w @relocateit/web
+
+      - name: Start API
+        env:
+          PORT: 3001
+        run: npm run start -w @relocateit/api > api.log 2>&1 &
+
+      - name: Start web
+        env:
+          PORT: 3000
+        run: npm run start -w @relocateit/web > web.log 2>&1 &
+
+      - name: Wait for services
+        run: |
+          for i in {1..45}; do
+            if curl -fsS "$API_URL/api/health" >/dev/null && curl -fsS "$WEB_URL/sign-in" >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Services did not become ready in time."
+          exit 1
+
+      - name: Readiness check
+        run: npm run readiness:check
+
+      - name: Authenticated QA flow
+        run: npm run qa:core
+
+      - name: Print service logs on failure
+        if: failure()
+        run: |
+          echo "=== API log ==="
+          cat api.log || true
+          echo "=== Web log ==="
+          cat web.log || true
