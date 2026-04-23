@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: starter
     region: oregon
-    buildCommand: npm run deploy:build:web
+    buildCommand: npm ci && npm run deploy:build:web
     startCommand: npm run deploy:start:web
     envVars:
       - key: NODE_VERSION
@@ -17,7 +17,7 @@ services:
     runtime: node
     plan: starter
     region: oregon
-    buildCommand: npm run deploy:build:api
+    buildCommand: npm ci && npm run deploy:build:api
     startCommand: npm run deploy:start:api
     preDeployCommand: npm run deploy:migrate
     envVars:
