@@ -12,6 +12,21 @@ import type {
 } from "@relocateit/types";
 import { requireApiBaseUrl } from "./env";
 
+function normalizeErrorMessage(response: Response, body: string) {
+  const contentType = response.headers.get("content-type") ?? "";
+  const trimmedBody = body.trim();
+
+  if (contentType.includes("text/html") || trimmedBody.startsWith("<!DOCTYPE html")) {
+    if (response.status === 404) {
+      return "The web API proxy route is not available in this deployment yet. Redeploy the web service and verify /api/health on the web origin.";
+    }
+
+    return `The web app received HTML instead of an API response (status ${response.status}). Check the hosted web deployment and API URL wiring.`;
+  }
+
+  return body || `Request failed with status ${response.status}`;
+}
+
 async function createRequestInit(init: RequestInit = {}) {
   const headers = new Headers(init.headers);
 
@@ -48,7 +63,7 @@ async function request(path: string, init: RequestInit = {}) {
 async function readJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const message = await response.text();
-    throw new Error(message || `Request failed with status ${response.status}`);
+    throw new Error(normalizeErrorMessage(response, message));
   }
 
   return (await response.json()) as T;
@@ -57,7 +72,7 @@ async function readJson<T>(response: Response): Promise<T> {
 async function readNullableJson<T>(response: Response): Promise<T | null> {
   if (!response.ok) {
     const message = await response.text();
-    throw new Error(message || `Request failed with status ${response.status}`);
+    throw new Error(normalizeErrorMessage(response, message));
   }
 
   const body = await response.text();
