@@ -1,16 +1,15 @@
-function requireEnv(key: string, help: string) {
-  const value = process.env[key];
+export function getApiBaseUrl() {
+  return process.env.NEXT_PUBLIC_API_URL?.trim() || null;
+}
+
+export function requireApiBaseUrl() {
+  const value = getApiBaseUrl();
 
   if (!value) {
-    throw new Error(`Missing ${key}. ${help}`);
+    throw new Error(
+      "Missing NEXT_PUBLIC_API_URL. Set NEXT_PUBLIC_API_URL in .env so the web app knows how to reach the API."
+    );
   }
 
   return value;
-}
-
-export function getApiBaseUrl() {
-  return requireEnv(
-    "NEXT_PUBLIC_API_URL",
-    "Set NEXT_PUBLIC_API_URL in .env so the web app knows how to reach the API."
-  );
 }

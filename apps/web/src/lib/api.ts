@@ -10,9 +10,7 @@ import type {
   SavedLocationRecord,
   User
 } from "@relocateit/types";
-import { getApiBaseUrl } from "./env";
-
-const API_BASE_URL = getApiBaseUrl();
+import { requireApiBaseUrl } from "./env";
 
 async function createRequestInit(init: RequestInit = {}) {
   const headers = new Headers(init.headers);
@@ -42,7 +40,9 @@ async function createRequestInit(init: RequestInit = {}) {
 }
 
 async function request(path: string, init: RequestInit = {}) {
-  return fetch(`${API_BASE_URL}${path}`, await createRequestInit(init));
+  const apiBaseUrl = requireApiBaseUrl();
+
+  return fetch(`${apiBaseUrl}${path}`, await createRequestInit(init));
 }
 
 async function readJson<T>(response: Response): Promise<T> {
