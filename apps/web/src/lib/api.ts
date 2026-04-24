@@ -40,7 +40,7 @@ async function createRequestInit(init: RequestInit = {}) {
 }
 
 async function request(path: string, init: RequestInit = {}) {
-  const apiBaseUrl = requireApiBaseUrl();
+  const apiBaseUrl = typeof window === "undefined" ? requireApiBaseUrl() : "";
 
   return fetch(`${apiBaseUrl}${path}`, await createRequestInit(init));
 }
